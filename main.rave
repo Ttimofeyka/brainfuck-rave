@@ -1,0 +1,86 @@
+/*
+Brainfuck Interpreter in Rave
+Efficient implementation with precomputed bracket matching
+*/
+
+import <std/io> <std/memory> <std/vector> <std/string> <std/arg>
+
+namespace bf {
+    alias TAPE_SIZE = 30000;
+}
+
+int main(int argc, char** argv) {
+    std::string code;
+
+    // Load code from file or stdin
+    if (argc > 1) {
+        std::file f = std::file(argv[1]);
+        f.open("r");
+        code = f.readAll();
+        f.close();
+    }
+    else code = std::readLine();
+
+    // Allocate and zero the tape
+    uchar* tape = cast(uchar*)std::malloc(bf::TAPE_SIZE);
+    defer std::free(cast(char*)tape);
+    std::memset(cast(char*)tape, 0, bf::TAPE_SIZE);
+
+    // Instruction and data pointers
+    usize ip = 0;
+    usize dp = 0;
+
+    // Precompute bracket matching for O(1) loop jumps
+    std::vector<usize> bracketStack = std::vector<usize>();
+    std::vector<usize> bracketMap = std::vector<usize>(code.length);
+    bracketMap.zero();
+
+    for (usize i = 0; i < code.length; i += 1) {
+        char c = code.data[i];
+        if (c == '[') bracketStack.add(i);
+        else if (c == ']') {
+            if (bracketStack.length == 0) {
+                std::println("Error: unmatched ] at position ", i);
+                return = 1;
+            }
+
+            usize start = bracketStack.data[bracketStack.length - 1];
+            bracketStack.length -= 1;
+            bracketMap.data[start] = i;
+            bracketMap.data[i] = start;
+        }
+    }
+
+    if (bracketStack.length > 0) {
+        std::println("Error: unmatched [ at position ", bracketStack.data[0]);
+        return = 1;
+    }
+
+    // Execute Brainfuck code
+    while (ip < code.length) {
+        char cmd = code.data[ip];
+
+        switch (cmd) {
+            case('+') tape[dp] += 1;
+            case('-') tape[dp] -= 1;
+            case('>') {
+                dp += 1;
+                if (dp >= bf::TAPE_SIZE) dp = 0;
+            }
+            case('<') {
+                if (dp == 0) dp = bf::TAPE_SIZE - 1;
+                else dp -= 1;
+            }
+            case('.') std::putchar(cast(char)tape[dp]);
+            case(',') tape[dp] = cast(uchar)std::getchar();
+            case('[') {
+                if (tape[dp] == 0) ip = bracketMap.data[ip];
+            }
+            case(']') {
+                if (tape[dp] != 0) ip = bracketMap.data[ip];
+            }
+        }
+
+        ip += 1;
+    }
+}
