@@ -20,14 +20,11 @@ rave main.rave -o bf -Ofast
 ## Usage
 
 ```bash
-# Run from file
-./bf examples/hello.bf
+# Run from file (with support of ',' commands)
+./bf examples/hello_world.bf
 
 # Pipe code directly
 echo "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>." | ./bf
-
-# Interactive input (programs using ',' command)
-./bf examples/cat.bf
 ```
 
 ## Brainfuck Commands
